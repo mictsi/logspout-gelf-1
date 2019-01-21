@@ -95,10 +95,15 @@ func NewGelfAdapter(route *router.Route) (router.LogAdapter, error) {
 // Stream implements the router.LogAdapter interface.
 func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 	for m := range logstream {
+		messageHostname := hostname
+		if messageHostname == "" {
+			// Same default as https://github.com/gliderlabs/logspout/blob/master/adapters/syslog/syslog.go
+			messageHostname = m.Container.Config.Hostname
+		}
 
 		msg := GelfMessage{
 			Version:        "1.1",
-			Host:           hostname,
+			Host:           messageHostname,
 			ShortMessage:   m.Data,
 			Timestamp:      m.Time.Format(time.RFC3339Nano),
 			ContainerId:    m.Container.ID,
