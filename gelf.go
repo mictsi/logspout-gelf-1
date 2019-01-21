@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gliderlabs/logspout/router"
+	"github.com/Graylog2/go-gelf/gelf"
 )
 
 const defaultRetryCount = 10
@@ -115,6 +116,7 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 			ShortMessage:   shortMessage,
 			FullMessage:    fullMessage,
 			Timestamp:      m.Time.Format(time.RFC3339Nano),
+			Level:          gelf.LOG_INFO,
 			ContainerId:    m.Container.ID,
 			ContainerName:  m.Container.Name[1:], // might be better to use strings.TrimLeft() to remove the first /
 			ContainerCmd:   strings.Join(m.Container.Config.Cmd," "),
@@ -123,12 +125,8 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 			Created:        m.Container.Created.Format(time.RFC3339Nano),
 		}
 
-		if m.Source == "stdout" {
-			msg.Level = 3
-		}
-		
 		if m.Source == "stderr" {
-			msg.Level = 6
+			msg.Level = gelf.LOG_ERR
 		}
 
 		js, err := json.Marshal(msg)
@@ -235,7 +233,7 @@ type GelfMessage struct {
 	ShortMessage string  `json:"short_message"`
 	FullMessage  string  `json:"full_message,omitempty"`
 	Timestamp    string  `json:"timestamp,omitempty"`
-	Level        int     `json:"level,omitempty"`
+	Level        int32   `json:"level,omitempty"`
 
 	ImageId        string `json:"_image_id,omitempty"`
 	ImageName      string `json:"_image_name,omitempty"`
