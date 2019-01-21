@@ -101,10 +101,19 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 			messageHostname = m.Container.Config.Hostname
 		}
 
+		shortMessage := m.Data
+		fullMessage := ""
+		shortMessageNewLine := strings.Index(shortMessage, "\n")
+		if shortMessageNewLine != -1 {
+			fullMessage = shortMessage
+			shortMessage = shortMessage[:shortMessageNewLine]
+		}
+
 		msg := GelfMessage{
 			Version:        "1.1",
 			Host:           messageHostname,
-			ShortMessage:   m.Data,
+			ShortMessage:   shortMessage,
+			FullMessage:    fullMessage,
 			Timestamp:      m.Time.Format(time.RFC3339Nano),
 			ContainerId:    m.Container.ID,
 			ContainerName:  m.Container.Name[1:], // might be better to use strings.TrimLeft() to remove the first /
