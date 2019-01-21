@@ -1,10 +1,12 @@
-# Graylog GELF Module for Logspout
+# Graylog GELF Module for logspout
 
-This module allows Logspout to send Docker logs in the GELF format to Graylog via UDP or TCP.
+This module allows logspout to send Docker logs in the GELF format to Graylog via UDP, TCP or TLS.
+
+Unlike other logspout GELF modules, this module uses Logspout's built-in transports (UDP, TCP and TLS) so all of logspout's configuration for those transports applies. This is particularly important for TLS (see below for configuration examples).
 
 ## Why
 
-This module is based on [Rick Alm's module](https://github.com/rickalm/logspout-gelf), which is based on Micha Hausler's initial module for Logspout. This module contains
+This module is based on [Rick Alm's module](https://github.com/rickalm/logspout-gelf), which is based on Micha Hausler's initial module for logspout. This module contains
 additional features including:
 
 * TCP support (part of Rick Alm's module)
@@ -12,11 +14,8 @@ additional features including:
 * Swarm hostname support
 * Null-terminated GELF messages
 
-From Rick:
-
-> Micha Hausler did an initial module for Logspout to output in Gelf format, but the datamodel he chose was based on GELF ideas. This version of the module outputs in the same format as the Docker GELF logger.
->
-> The disadvantage to using the Docker GELF logger is the loss of the local Docker log (e.g. `docker logs <container>`). By using Logspout to effectively "tail" the log, this creates an additional copy of the log sent in GELF Format.
+This module attempts to copy the logging format used by the [Docker gelf log driver](https://github.com/moby/moby/blob/master/daemon/logger/gelf/gelf.go)
+and [Micha Hausler's logspout module](https://github.com/micahhausler/logspout-gelf/blob/master/gelf.go).
 
 ## Build
 
@@ -25,7 +24,7 @@ To build, you'll need to fork [Logspout](https://github.com/gliderlabs/logspout)
 ```
 _ "github.com/karlvr/logspout-gelf"
 ```
-and run `docker build -t $(whoami)/logspout:gelf`
+and run `docker build -t $(whoami)/logspout:gelf .`
 
 Alternatively you can use my prebuilt Docker image [karlvr/logspout-gelf](https://hub.docker.com/r/karlvr/logspout-gelf).
 
