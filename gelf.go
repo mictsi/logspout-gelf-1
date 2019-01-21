@@ -53,7 +53,7 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 			ShortMessage:   m.Data,
 			Timestamp:      m.Time.Format(time.RFC3339Nano),
 			ContainerId:    m.Container.ID,
-			ContainerName:  m.Container.Name,
+			ContainerName:  m.Container.Name[1:], // might be better to use strings.TrimLeft() to remove the first /
 			ContainerCmd:   strings.Join(m.Container.Config.Cmd," "),
 			ImageId:        m.Container.Image,
 			ImageName:      m.Container.Config.Image,
