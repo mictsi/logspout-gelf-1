@@ -3,21 +3,41 @@ package gelf
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
-	"time"
+	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/gliderlabs/logspout/router"
 )
 
-var hostname string
+const defaultRetryCount = 10
+
+var (
+	hostname string
+	retryCount       uint
+	econnResetErrStr string
+)
 
 func init() {
 	hostname, _ = os.Hostname()
+	econnResetErrStr = fmt.Sprintf("write: %s", syscall.ECONNRESET.Error())
 	router.AdapterFactories.Register(NewGelfAdapter, "gelf")
+	setRetryCount()
+}
+
+func setRetryCount() {
+	if count, err := strconv.Atoi(getopt("RETRY_COUNT", strconv.Itoa(defaultRetryCount))); err != nil {
+		retryCount = uint(defaultRetryCount)
+	} else {
+		retryCount = uint(count)
+	}
+	debug("Graylog: setting retryCount to:", retryCount)
 }
 
 func getopt(name, dfault string) string {
@@ -26,6 +46,12 @@ func getopt(name, dfault string) string {
 		value = dfault
 	}
 	return value
+}
+
+func debug(v ...interface{}) {
+	if os.Getenv("DEBUG") != "" {
+		log.Println(v...)
+	}
 }
 
 func getHostname() string {
@@ -42,6 +68,7 @@ func getHostname() string {
 type GelfAdapter struct {
 	conn  net.Conn
 	route *router.Route
+	transport router.AdapterTransport
 }
 
 // NewGelfAdapter creates a GelfAdapter with UDP as the default transport.
@@ -59,8 +86,9 @@ func NewGelfAdapter(route *router.Route) (router.LogAdapter, error) {
 	hostname = getHostname()
 
 	return &GelfAdapter{
-		route: route,
-		conn:  conn,
+		route:     route,
+		conn:      conn,
+		transport: transport,
 	}, nil
 }
 
@@ -99,8 +127,90 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 		_, err = a.conn.Write(js)
 		if err != nil {
 			log.Println("Graylog:", err)
-			continue
+			switch a.conn.(type) {
+			case *net.UDPConn:
+				continue
+			default:
+				if err = a.retry(js, err); err != nil {
+					log.Panicf("Graylog retry err: %+v", err)
+					return
+				}
+			}
 		}
+	}
+}
+
+func (a *GelfAdapter) retry(buf []byte, err error) error {
+	if opError, ok := err.(*net.OpError); ok {
+		if (opError.Temporary() && opError.Err.Error() != econnResetErrStr) || opError.Timeout() {
+			retryErr := a.retryTemporary(buf)
+			if retryErr == nil {
+				return nil
+			}
+		}
+	}
+	if reconnErr := a.reconnect(); reconnErr != nil {
+		return reconnErr
+	}
+	if _, err = a.conn.Write(buf); err != nil {
+		log.Println("Graylog: reconnect failed")
+		return err
+	}
+	log.Println("Graylog: reconnect successful")
+	return nil
+}
+
+func (a *GelfAdapter) retryTemporary(buf []byte) error {
+	log.Printf("Graylog: retrying tcp up to %v times\n", retryCount)
+	err := retryExp(func() error {
+		_, err := a.conn.Write(buf)
+		if err == nil {
+			log.Println("Graylog: retry successful")
+			return nil
+		}
+
+		return err
+	}, retryCount)
+
+	if err != nil {
+		log.Println("Graylog: retry failed")
+		return err
+	}
+
+	return nil
+}
+
+func (a *GelfAdapter) reconnect() error {
+	log.Printf("Graylog: reconnecting up to %v times\n", retryCount)
+	err := retryExp(func() error {
+		conn, err := a.transport.Dial(a.route.Address, a.route.Options)
+		if err != nil {
+			return err
+		}
+		a.conn = conn
+		return nil
+	}, retryCount)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func retryExp(fun func() error, tries uint) error {
+	try := uint(0)
+	for {
+		err := fun()
+		if err == nil {
+			return nil
+		}
+
+		try++
+		if try > tries {
+			return err
+		}
+
+		time.Sleep((1 << try) * 10 * time.Millisecond)
 	}
 }
 
