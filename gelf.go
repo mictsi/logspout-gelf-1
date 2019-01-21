@@ -3,6 +3,7 @@ package gelf
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -17,6 +18,24 @@ var hostname string
 func init() {
 	hostname, _ = os.Hostname()
 	router.AdapterFactories.Register(NewGelfAdapter, "gelf")
+}
+
+func getopt(name, dfault string) string {
+	value := os.Getenv(name)
+	if value == "" {
+		value = dfault
+	}
+	return value
+}
+
+func getHostname() string {
+	content, err := ioutil.ReadFile("/etc/host_hostname")
+	if err == nil && len(content) > 0 {
+		hostname = strings.TrimRight(string(content), "\r\n")
+	} else {
+		hostname = getopt("GELF_HOSTNAME", "")
+	}
+	return hostname
 }
 
 // GelfAdapter is an adapter that streams UDP JSON to Graylog
@@ -37,6 +56,8 @@ func NewGelfAdapter(route *router.Route) (router.LogAdapter, error) {
 		return nil, err
 	}
 
+	hostname = getHostname()
+
 	return &GelfAdapter{
 		route: route,
 		conn:  conn,
@@ -49,7 +70,7 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 
 		msg := GelfMessage{
 			Version:        "1.1",
-      			Host:           hostname, // Running as a container cannot discover the Docker Hostname
+      		Host:           hostname,
 			ShortMessage:   m.Data,
 			Timestamp:      m.Time.Format(time.RFC3339Nano),
 			ContainerId:    m.Container.ID,
