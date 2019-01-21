@@ -111,6 +111,7 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 			ContainerCmd:   strings.Join(m.Container.Config.Cmd," "),
 			ImageId:        m.Container.Image,
 			ImageName:      m.Container.Config.Image,
+			Created:        m.Container.Created.Format(time.RFC3339Nano),
 		}
 
 		if m.Source == "stdout" {
@@ -232,5 +233,6 @@ type GelfMessage struct {
 	ContainerId    string `json:"_container_id,omitempty"`
 	ContainerName  string `json:"_container_name,omitempty"`
 	ContainerCmd   string `json:"_command,omitempty"`
+	Created        string `json:"_created,omitempty"`
 }
 
