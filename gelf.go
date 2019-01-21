@@ -96,6 +96,12 @@ func NewGelfAdapter(route *router.Route) (router.LogAdapter, error) {
 // Stream implements the router.LogAdapter interface.
 func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 	for m := range logstream {
+		extra, err := extraFields(m)
+		if err != nil {
+			log.Println("Graylog:", err)
+			continue
+		}
+
 		messageHostname := hostname
 		if messageHostname == "" {
 			// Same default as https://github.com/gliderlabs/logspout/blob/master/adapters/syslog/syslog.go
@@ -135,6 +141,11 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 			continue
 		}
 		
+		if len(extra) > 2 {
+			js = append(js[:len(js)-1], ',')
+			js = append(js, extra[1:]...)
+		}
+
 		js = append(js, 0)
 
 		_, err = a.conn.Write(js)
@@ -243,3 +254,23 @@ type GelfMessage struct {
 	Created        string `json:"_created,omitempty"`
 }
 
+func extraFields(m *router.Message) (json.RawMessage, error) {
+
+	extra := map[string]interface{}{
+	}
+	for name, label := range m.Container.Config.Labels {
+		if len(name) > 5 && strings.ToLower(name[0:5]) == "gelf_" {
+			extra[name[4:]] = label
+		}
+	}
+	swarmnode := m.Container.Node
+	if swarmnode != nil {
+		extra["_swarm_node"] = swarmnode.Name
+	}
+
+	rawExtra, err := json.Marshal(extra)
+	if err != nil {
+		return nil, err
+	}
+	return rawExtra, nil
+}
