@@ -98,7 +98,7 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 
 		msg := GelfMessage{
 			Version:        "1.1",
-      		Host:           hostname,
+			Host:           hostname,
 			ShortMessage:   m.Data,
 			Timestamp:      m.Time.Format(time.RFC3339Nano),
 			ContainerId:    m.Container.ID,
@@ -109,11 +109,11 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 		}
 
 		if m.Source == "stdout" {
-      			msg.Level = 3
-    		}
-    		
-    		if m.Source == "stderr" {
-    			msg.Level = 6
+			msg.Level = 3
+		}
+		
+		if m.Source == "stderr" {
+			msg.Level = 6
 		}
 
 		js, err := json.Marshal(msg)
