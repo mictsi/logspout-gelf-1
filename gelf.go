@@ -29,7 +29,7 @@ type GelfAdapter struct {
 func NewGelfAdapter(route *router.Route) (router.LogAdapter, error) {
 	transport, found := router.AdapterTransports.Lookup(route.AdapterTransport("udp"))
 	if !found {
-		return nil, errors.New("unable to find adapter: " + route.Adapter)
+		return nil, errors.New("bad transport: " + route.Adapter)
 	}
 
 	conn, err := transport.Dial(route.Address, route.Options)
