@@ -223,14 +223,14 @@ type GelfMessage struct {
 	Version      string  `json:"version"`
 	Host         string  `json:"host,omitempty"`
 	ShortMessage string  `json:"short_message"`
-	FullMessage  string  `json:"message,omitempty"`
+	FullMessage  string  `json:"full_message,omitempty"`
 	Timestamp    string  `json:"timestamp,omitempty"`
 	Level        int     `json:"level,omitempty"`
 
-	ImageId        string `json:"image_id,omitempty"`
-	ImageName      string `json:"image_name,omitempty"`
-	ContainerId    string `json:"container_id,omitempty"`
-	ContainerName  string `json:"container_name,omitempty"`
-	ContainerCmd   string `json:"command,omitempty"`
+	ImageId        string `json:"_image_id,omitempty"`
+	ImageName      string `json:"_image_name,omitempty"`
+	ContainerId    string `json:"_container_id,omitempty"`
+	ContainerName  string `json:"_container_name,omitempty"`
+	ContainerCmd   string `json:"_command,omitempty"`
 }
 
