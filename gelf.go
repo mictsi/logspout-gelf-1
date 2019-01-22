@@ -109,6 +109,10 @@ func (a *GelfAdapter) Stream(logstream chan *router.Message) {
 		}
 
 		shortMessage := m.Data
+		if shortMessage == "" {
+			continue
+		}
+		
 		fullMessage := ""
 		shortMessageNewLine := strings.Index(shortMessage, "\n")
 		if shortMessageNewLine != -1 {
