@@ -6,7 +6,7 @@ Unlike other logspout GELF modules, this module uses Logspout's built-in transpo
 
 ## Why
 
-This module is based on [Rick Alm's module](https://github.com/rickalm/logspout-gelf), which is based on Micha Hausler's initial module for logspout. This module contains
+This module is based on [Rick Alm's module](https://github.com/rickalm/logspout-gelf), which is based on [Micha Hausler's initial module for logspout](https://github.com/micahhausler/logspout-gelf). This module contains
 additional features including:
 
 * TCP support (part of Rick Alm's module)
