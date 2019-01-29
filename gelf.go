@@ -56,13 +56,7 @@ func debug(v ...interface{}) {
 }
 
 func getHostname() string {
-	content, err := ioutil.ReadFile("/etc/host_hostname")
-	if err == nil && len(content) > 0 {
-		hostname = strings.TrimRight(string(content), "\r\n")
-	} else {
-		hostname = getopt("GELF_HOSTNAME", "")
-	}
-	return hostname
+	hostname, _ = os.Hostname()
 }
 
 // GelfAdapter is an adapter that streams UDP JSON to Graylog
