@@ -55,10 +55,6 @@ func debug(v ...interface{}) {
 	}
 }
 
-func getHostname() string {
-	hostname, _ = os.Hostname()
-}
-
 // GelfAdapter is an adapter that streams UDP JSON to Graylog
 type GelfAdapter struct {
 	conn  net.Conn
