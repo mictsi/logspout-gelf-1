@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -52,6 +53,12 @@ func debug(v ...interface{}) {
 	if os.Getenv("DEBUG") != "" {
 		log.Println(v...)
 	}
+}
+
+func getHostname() string {
+
+	hostname, _ = os.Hostname()
+	return hostname
 }
 
 // GelfAdapter is an adapter that streams UDP JSON to Graylog
