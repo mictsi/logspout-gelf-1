@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
 	"github.com/gliderlabs/logspout/router"
 	"github.com/Graylog2/go-gelf/gelf"
 )
@@ -18,12 +19,13 @@ import (
 const defaultRetryCount = 10
 
 var (
-	hostname string = os.Hostname()
+	hostname string
 	retryCount       uint
 	econnResetErrStr string
 )
 
 func init() {
+	hostname, _ = os.Hostname()
 	econnResetErrStr = fmt.Sprintf("write: %s", syscall.ECONNRESET.Error())
 	router.AdapterFactories.Register(NewGelfAdapter, "gelf")
 	setRetryCount()
@@ -52,6 +54,11 @@ func debug(v ...interface{}) {
 	}
 }
 
+func getHostname() string {
+	hostname, _ = os.Hostname()
+	return hostname
+
+}
 
 // GelfAdapter is an adapter that streams UDP JSON to Graylog
 type GelfAdapter struct {
@@ -71,6 +78,8 @@ func NewGelfAdapter(route *router.Route) (router.LogAdapter, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	hostname = getHostname()
 
 	return &GelfAdapter{
 		route:     route,
