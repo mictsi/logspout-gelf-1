@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  logspout:
+    image: kthse/logspout-gelf-tls:87
+    hostname: myhostname
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: gelf+tls://myservernameFQDN:12201
+    restart: unless-stopped
