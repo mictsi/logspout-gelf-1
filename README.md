@@ -1,3 +1,6 @@
+# This Project is replaced with https://github.com/mictsi/logspout-gelf-tls 
+
+
 # Graylog GELF Module for logspout
 
 This module allows logspout to send Docker logs in the GELF format to Graylog via UDP, TCP or TLS.
